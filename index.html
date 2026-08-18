@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AI Revenue Race</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --c1: #2a78d6; /* Anthropic */
+    --c2: #eb6834; /* OpenAI */
+    --c3: #1baf7a; /* xAI (Grok) */
+    --c4: #eda100; /* Mistral */
+    --c5: #e87ba4; /* Perplexity */
+    --c6: #008300; /* Cohere */
+    --c7: #4a3aa7; /* Cohere */
+    --c8: #e34948; /* DeepSeek */
+    --blue-wash: rgba(42,120,214,0.10);
+    --tooltip-bg: #0b0b0b;
+    --tooltip-ink: #fcfcfb;
+    --tooltip-ink2: #c3c2b7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --ink: #ffffff;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --c1: #3987e5;
+      --c2: #d95926;
+      --c3: #199e70;
+      --c4: #c98500;
+      --c5: #d55181;
+      --c6: #008300;
+      --c7: #9085e9;
+      --c8: #e66767;
+      --blue-wash: rgba(57,135,229,0.14);
+      --tooltip-bg: #fcfcfb;
+      --tooltip-ink: #0b0b0b;
+      --tooltip-ink2: #52514e;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --c1: #3987e5;
+    --c2: #d95926;
+    --c3: #199e70;
+    --c4: #c98500;
+    --c5: #d55181;
+    --c6: #008300;
+    --c7: #9085e9;
+    --c8: #e66767;
+    --blue-wash: rgba(57,135,229,0.14);
+    --tooltip-bg: #fcfcfb;
+    --tooltip-ink: #0b0b0b;
+    --tooltip-ink2: #52514e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 40px 24px 64px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; text-wrap: balance; }
+  .dek { color: var(--ink-2); font-size: 16px; max-width: 66ch; margin: 0 0 28px; }
+  .dek strong { color: var(--ink); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .tile .label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .tile .value { font-size: 24px; font-weight: 650; }
+  .tile .sub { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 20px 12px; margin-bottom: 28px; }
+  .cardhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card h2 { font-size: 15px; margin: 0 0 2px; }
+  .card .subtitle { font-size: 13px; color: var(--ink-2); margin: 0 0 12px; }
+  .scale-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .scale-toggle button {
+    font: inherit; font-size: 12.5px; padding: 4px 12px; border: none; cursor: pointer;
+    background: transparent; color: var(--ink-2);
+  }
+  .scale-toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); font-weight: 600; }
+  .scale-toggle button:focus-visible { outline: 2px solid var(--c1); outline-offset: -2px; }
+
+  .key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin-bottom: 8px; }
+  .key span { display: inline-flex; align-items: center; gap: 6px; }
+  .linekey { width: 18px; height: 0; border-top: 2.5px solid; border-radius: 2px; display: inline-block; }
+  .swatch { width: 14px; height: 10px; border-radius: 2.5px; background: var(--c1); display: inline-block; }
+  .swatch.est { background: var(--blue-wash); border: 1.5px dashed var(--c1); }
+  .dotkey { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); display: inline-block; }
+  .dashkey { width: 18px; height: 0; border-top: 2.5px dashed var(--ink-2); display: inline-block; }
+
+  .chartbox { position: relative; overflow-x: auto; }
+  .chartbox svg { display: block; width: 100%; height: auto; min-width: 660px; }
+  .tooltip {
+    position: absolute; pointer-events: none; display: none;
+    background: var(--tooltip-bg); color: var(--tooltip-ink);
+    font-size: 12.5px; line-height: 1.45; padding: 8px 11px; border-radius: 6px;
+    max-width: 260px; z-index: 5;
+  }
+  .tooltip .t-title { font-weight: 650; margin-bottom: 3px; }
+  .tooltip .t-row { display: flex; align-items: center; gap: 7px; }
+  .tooltip .t-row .lk { width: 12px; height: 0; border-top: 2.5px solid; border-radius: 2px; flex: none; }
+  .tooltip .t-row .v { font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tooltip .t-row .n { color: var(--tooltip-ink2); }
+
+  .prose { max-width: 68ch; }
+  .prose h2 { font-size: 18px; margin: 32px 0 8px; }
+  .prose p { margin: 0 0 12px; color: var(--ink-2); }
+  .prose p strong { color: var(--ink); }
+  .prose ul { margin: 0 0 12px; padding-left: 20px; color: var(--ink-2); }
+  .prose li { margin-bottom: 6px; }
+
+  details { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); margin-bottom: 10px; }
+  summary { cursor: pointer; padding: 10px 14px; font-size: 14px; font-weight: 600; }
+  summary:focus-visible { outline: 2px solid var(--c1); }
+  details table { margin: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; background: var(--surface); }
+  th, td { text-align: left; padding: 7px 14px; border-bottom: 1px solid var(--grid); }
+  th { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  td { color: var(--ink-2); }
+  td:first-child { color: var(--ink); }
+  tr.total td { font-weight: 650; color: var(--ink); border-top: 1.5px solid var(--baseline); }
+  .tablebox { border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; margin: 16px 0 8px; }
+
+  .sources { font-size: 13px; color: var(--muted); margin-top: 32px; border-top: 1px solid var(--grid); padding-top: 14px; }
+  .sources a { color: var(--ink-2); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Run-rate revenue tracker · updated Aug 18, 2026</p>
+  <h1>The AI revenue race</h1>
+  <p class="dek"><strong>Anthropic passed OpenAI in annualized revenue around April 2026</strong> — $30B against a roughly flat ~$25B — and kept climbing to $47B by mid-May, an estimated ~$63B exiting June, and a <strong>confirmed $65B at the end of July</strong>. That confirmation also means Anthropic's own growth cooled sharply in July, to low single digits month-over-month. OpenAI meanwhile reaccelerated hard: Bloomberg puts its run rate <strong>above $40B as of August 13</strong>. Microsoft's disclosed "AI business" — Azure AI plus Copilot — crossed <strong>$37B in April</strong>. Everyone else — Grok, Mistral, Perplexity, Cohere, DeepSeek — sums to roughly <strong>$2B combined</strong>. Google and Meta never break the number out, so they ride the chart as dashed-gray estimates: <strong>~$3–6B</strong> of direct Gemini revenue and <strong>~$0.1–0.3B</strong> for Meta AI — while their real AI money hides in ads Google says AI Mode monetizes "at similar rates to Search," and Meta's AI ad suite runs at $75B a year.</p>
+
+  <div class="stats">
+    <div class="tile"><div class="label">Anthropic</div><div class="value">$65B</div><div class="sub">confirmed end-July run rate; ~$63B est. June exit</div></div>
+    <div class="tile"><div class="label">OpenAI</div><div class="value">&gt;$40B</div><div class="sub">Aug 13 · flat ~$25B Feb–Apr, then +20%/mo</div></div>
+    <div class="tile"><div class="label">Lead change</div><div class="value">Apr 2026</div><div class="sub">Anthropic $30B vs OpenAI ~$25B</div></div>
+    <div class="tile"><div class="label">Google + Meta (est.)</div><div class="value">~$4–6B</div><div class="sub">direct AI only — their AI-driven ads dwarf it</div></div>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <div>
+        <h2>Annualized revenue run rate</h2>
+        <p class="subtitle">Oct 2023 – Aug 2026 · dots are disclosed checkpoints; hover interpolates between them · xAI is Grok standalone · Microsoft AI = Azure AI + Copilot · gray dashed = estimated (Google, Meta)</p>
+      </div>
+      <div class="scale-toggle" role="group" aria-label="Y-axis scale">
+        <button id="btn-lin" aria-pressed="true">Linear</button>
+        <button id="btn-log" aria-pressed="false">Log</button>
+      </div>
+    </div>
+    <div class="key" id="race-legend"></div>
+    <div class="key"><span><span class="dashkey"></span> dashed + hollow dot = estimate</span></div>
+    <div class="chartbox" id="racebox">
+      <svg id="race" viewBox="0 0 880 440" role="img" aria-label="Line chart of annualized revenue run rates for eight AI companies from late 2023 to August 2026. Anthropic rises from about 100 million dollars to a confirmed 65 billion at the end of July 2026, passing OpenAI in April 2026; OpenAI reaches over 40 billion by August 2026; Microsoft's AI business reaches 37 billion by April 2026; all other companies remain below one billion."></svg>
+      <div class="tooltip" id="race-tip"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardhead"><div>
+      <h2>Inside Anthropic's Q2 — monthly revenue, reconstructed</h2>
+      <p class="subtitle">$ billions per month, 2026 · bars anchored to disclosed run-rate checkpoints and quarter totals</p>
+    </div></div>
+    <div class="key">
+      <span><span class="swatch"></span> Reconstructed from disclosures</span>
+      <span><span class="swatch est"></span> June — implied by Q2 total (whisker = plausible range)</span>
+      <span><span class="dotkey"></span> Disclosed run-rate checkpoint ÷ 12</span>
+    </div>
+    <div class="chartbox" id="monthbox">
+      <svg id="chart" viewBox="0 0 800 360" role="img" aria-label="Bar chart of Anthropic monthly revenue January through June 2026, rising from about 1.1 to about 4.8 billion dollars per month, with June shown as an estimate below the constant-growth trend"></svg>
+      <div class="tooltip" id="month-tip"></div>
+    </div>
+  </div>
+
+  <div class="prose">
+    <h2>The race, in three acts</h2>
+    <p><strong>Through 2025 OpenAI led comfortably</strong> — $10B annualized in June 2025 against Anthropic's $3B that May, and $20B by year-end against Anthropic's $9B. <strong>In early 2026 the lines converged violently:</strong> Anthropic went $14B (Feb 12) → $30B (Apr 6) → $47B (mid-May) while OpenAI sat roughly flat near $25B from February to April — the crossing lands in April. <strong>Act three is a double deceleration:</strong> Anthropic confirmed to investors a $65B run rate at the end of July — up only ~3% from the ~$63B estimated June exit, after months above 20% — while Bloomberg reported OpenAI's July growth above 20% month-over-month and a rate topping $40B on August 13, driven by coding tools, subscriptions, and its new ads business. The gap held (~1.6×), but it is now OpenAI that is compounding faster.</p>
+    <h2>Was June an Anthropic slowdown?</h2>
+    <p>In growth-rate terms, mildly — the arithmetic forces it. Interpolating the run-rate checkpoints gives April ≈ $2.8B and May ≈ $4.0B of monthly revenue; Bloomberg's preliminary "more than $11.5B" Q2 total leaves June ≈ <strong>$4.7–4.9B</strong>, i.e. +20–30% month-over-month versus ~+40% in April–May. Had the pace held, June would have been ~$5.6B and Q2 ~$12.4B. Still: June was the biggest revenue month in company history, and the quarter beat the $10.9B internal projection that leaked on May 20. The honest June range is $4.4–5.6B with ~$5.0B a fair central guess. The clearer slowdown came a month later: the confirmed $65B end-of-July run rate sits barely above the ~$63B estimated June exit, putting July growth in the low single digits after a quarter compounding above 20% a month.</p>
+    <h2>Read the fine print</h2>
+    <ul>
+      <li><strong>Run rates aren't audited revenue, and definitions differ.</strong> Bloomberg itself flags that OpenAI and Anthropic "may not measure it the same way" — OpenAI's figure excludes Microsoft licensing and one-time deals; Anthropic's is ~80% API/enterprise. Treat the crossing as approximate.</li>
+      <li><strong>Quarter × 4 ≠ exit run rate.</strong> Anthropic's Q2 (&gt;$11.5B) annualizes to ~$46B — but that is the quarter's <em>average</em> pace, which in a fast-growing quarter matches the mid-quarter rate, and mid-quarter was mid-May: exactly when Anthropic disclosed $47B. The exit estimate solves the integral: the curve through $30B (Apr 6) and $47B (mid-May) books $4.45B by May 15, leaving $7.05B for the last 47 days — which forces ~21%/month continued growth and an end-of-June instantaneous rate near <strong>$63B</strong> ($55–70B across the "more than $11.5B" and path assumptions). The gap between $46B and $63B is the growth itself. The confirmed <strong>$65B end-of-July</strong> figure validates the estimate — and, read against it, says July grew only ~3% (or ~5–12% if the true June exit sat in the lower half of the band): the sharp deceleration the June data only hinted at arrived in July.</li>
+      <li><strong>Run rate ≠ recognized revenue.</strong> Applied to Q1, checkpoint math yields ~$3.9B against Anthropic's actual $4.73B — lumpy enterprise deals land on top. OpenAI similarly booked $5.7B in Q1 2026 (≈$22.8B annualized) while run-rate reports said ~$25B.</li>
+      <li><strong>The mid-2026 OpenAI path (~$25B Feb–Apr) rests on aggregator reporting</strong>, not primary articles; the $20B (Dec) and $40B+ (Aug) bookends are solid.</li>
+      <li><strong>Microsoft's "AI business" is a different animal:</strong> it bundles Copilot subscriptions with Azure AI infrastructure — including serving OpenAI's models — so its $37B partly double-counts the same economic activity behind OpenAI's line. Comparable as a disclosed number, not as a rival lab.</li>
+      <li><strong>Google and Meta are estimates, not disclosures — public doesn't mean broken out.</strong> Alphabet reports at segment level (Services / Cloud); Gemini is not a segment, and Alphabet gives only breadcrumbs: gen-AI product revenue "up ~800% YoY" with no dollar base, 8M paid Gemini Enterprise seats, subscriptions blended into a 350M-sub bundle. The $3–6B stitches those breadcrumbs together and leans on weakly-sourced subscription estimates. Meta's plotted ~$0.1–0.3B reflects that Llama API and Meta AI have no visible live monetization; its leaked $2–3B internal "generative AI" target for 2025 (court filing) has undefined scope.</li>
+      <li><strong>Both giants' real AI revenue is in ads and can't be isolated:</strong> Google says AI Overviews/AI Mode monetize at rates similar to Search (and may partly cannibalize it — answers without clicks); Meta's Advantage+ AI ad suite runs at $75B annualized. Neither belongs on a lab-revenue chart, but it is why the gray lines understate what AI earns these two.</li>
+      <li><strong>xAI is messy:</strong> $3.2B FY2025 company-wide (includes X platform revenue, per the SpaceX IPO filing) vs ~$500M mid-2026 for Grok standalone. The chart plots Grok standalone.</li>
+      <li><strong>Anthropic's June point and monthly bars are estimates</strong> (dashed/hollow on the charts); 2026 targets companies have announced (Mistral €1B, xAI $2B) are excluded — disclosed actuals only.</li>
+    </ul>
+
+    <h2>Data</h2>
+    <div id="tables"></div>
+
+    <p class="sources">Sources:
+      <a href="https://www.cnbc.com/2026/08/15/anthropic-revenue-jumps-to-over-11point5-billion-in-q2-report.html">CNBC · Anthropic Q2</a> ·
+      Anthropic investor disclosure · $65B run rate, end of July 2026 ·
+      <a href="https://www.bloomberg.com/news/articles/2026-08-13/openai-s-revenue-run-rate-tops-40-billion-ahead-of-ipo">Bloomberg · OpenAI $40B</a> ·
+      <a href="https://simonwillison.net/2026/May/29/anthropic/">Anthropic run-rate timeline</a> ·
+      <a href="https://www.cnbc.com/2025/06/09/openai-hits-10-billion-in-annualized-revenue-fueled-by-chatgpt-growth.html">CNBC · OpenAI $10B (2025)</a> ·
+      <a href="https://www.cnbc.com/2026/05/20/anthropic-revenue-explosive-growth-ipo-profitable-quarter.html">CNBC · $10.9B Q2 projection</a> ·
+      <a href="https://www.geekwire.com/2026/microsoft-tops-wall-street-expectations-reports-accelerating-azure-growth-and-37b-ai-run-rate/">GeekWire · Microsoft $37B AI run rate</a> ·
+      <a href="https://www.cnbc.com/2026/02/13/ai-startup-cohere-revenue-ipo.html">CNBC · Cohere</a> ·
+      <a href="https://www.theinformation.com/articles/deepseeks-annualized-revenue-nears-500-million-boosting-fundraise-ipo-plans">The Information · DeepSeek</a> ·
+      <a href="https://sacra.com/c/xai/">Sacra · xAI</a> ·
+      <a href="https://mlq.ai/news/mistral-ai-surges-revenue-20-fold-to-over-400-million-arr-amid-europes-ai-push/">MLQ · Mistral</a> ·
+      <a href="https://valueaddvc.com/blog/perplexity-ai-valuation-revenue-2026-23b-450m-arr">Perplexity ARR</a> ·
+      <a href="https://techcrunch.com/2026/04/29/google-gains-25m-subscriptions-in-q1-driven-by-youtube-and-google-one/">TechCrunch · Google subs</a> ·
+      <a href="https://techcrunch.com/2025/04/30/meta-forecasted-it-would-make-1-4t-in-revenue-from-generative-ai-by-2035">TechCrunch · Meta genAI filing</a> ·
+      <a href="https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Second-Quarter-2026-Results/default.aspx">Meta Q2 2026 results</a>
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (svg, tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    svg.appendChild(e);
+    return e;
+  };
+  const fmt = v => v >= 1 ? '$' + (v >= 10 ? Math.round(v) : v.toFixed(1)) + 'B' : '$' + Math.round(v * 1000) + 'M';
+
+  // ---- Race chart -------------------------------------------------------
+  // x unit: months since Oct 2023 (Oct'23 = 0). Values: annualized run rate, $B.
+  const SERIES = [
+    { name: 'Anthropic', color: 'var(--c1)',
+      pts: [[3, 0.1], [14, 1], [19, 3], [21, 4], [22, 5], [24, 7], [26, 9], [28.4, 14], [30.2, 30], [31.5, 47], [33, 63, 1], [34, 65]],
+      rows: [['Jan 2024', '~$100M', 'run rate (low-confidence aggregator)'], ['Dec 2024', '$1B', 'run rate'], ['May 2025', '$3B', 'run rate'], ['Jul 2025', '$4B', 'run rate'], ['Aug 2025', '$5B', 'run rate'], ['Oct 2025', '$7B', 'run rate'], ['Dec 2025', '$9B', 'run rate'], ['Feb 12, 2026', '$14B', 'run rate'], ['Apr 6, 2026', '$30B', 'run rate'], ['mid-May 2026', '$47B', 'run rate (Series H announcement)'], ['Jun 2026', '~$63B', 'estimated exit rate: solved from $47B mid-May + $11.5B quarter total; range $55–70B'], ['end of Jul 2026', '$65B', 'run rate (confirmed to investors)']] },
+    { name: 'OpenAI', color: 'var(--c2)',
+      pts: [[0, 1.3], [2, 1.6], [8.5, 3.4], [20.3, 10], [26.5, 20], [28.5, 25], [30.5, 25], [34.4, 40]],
+      rows: [['Oct 2023', '$1.3B', 'run rate'], ['Dec 2023', '$1.6B', 'run rate'], ['Jun 2024', '$3.4B', 'run rate'], ['Jun 9, 2025', '$10B', 'run rate'], ['Late 2025', '$20B', 'run rate (per CFO)'], ['Feb–Apr 2026', '~$25B', 'run rate, roughly flat (aggregator-sourced)'], ['Aug 13, 2026', '>$40B', 'run rate (Bloomberg)']] },
+    { name: 'Microsoft AI', color: 'var(--c3)',
+      pts: [[14, 10], [15.9, 13], [30.9, 37]],
+      rows: [['Dec 2024', '$10B', 'AI business run rate, surpassed per Oct 2024 guidance'], ['Jan 29, 2025', '$13B', 'AI business run rate, +175% YoY'], ['Apr 29, 2026', '$37B', 'AI business run rate, +123% YoY — first update since Jan 2025'], ['Note', '—', 'Azure AI + Copilot; includes serving OpenAI models, so it overlaps OpenAI economics']] },
+    { name: 'xAI (Grok)', color: 'var(--c4)',
+      pts: [[26.5, 0.35], [32, 0.5]],
+      rows: [['FY2025', '~$350M', 'Grok standalone, actual (Sacra)'], ['Mid-2026', '~$500M', 'run rate, Grok standalone'], ['FY2025', '$3.2B', 'xAI company-wide incl. X platform (SpaceX filing) — not plotted']] },
+    { name: 'Mistral', color: 'var(--c5)',
+      pts: [[15, 0.03], [23.5, 0.33], [27.5, 0.4]],
+      rows: [['FY2024', '~$30M', 'actual (estimate)'], ['Sep 2025', '€300M (~$330M)', 'ARR'], ['Jan 2026', '$400M', 'ARR']] },
+    { name: 'Perplexity', color: 'var(--c6)',
+      pts: [[23.5, 0.2], [26.5, 0.232], [29.5, 0.45], [30.5, 0.5]],
+      rows: [['Sep 2025', '$200M', 'ARR'], ['Dec 2025', '$232M', 'annualized (year-end)'], ['Mar 2026', '$450M', 'ARR'], ['Apr 2026', '$500M', 'ARR, +335% YoY']] },
+    { name: 'Cohere', color: 'var(--c7)',
+      pts: [[2.5, 0.013], [5.5, 0.035], [8.5, 0.07], [19.5, 0.1], [24.5, 0.15], [26.5, 0.24]],
+      rows: [['End 2023', '$13M', 'annualized'], ['Mar 2024', '$35M', 'run rate'], ['Mid-2024', '$70M', 'run rate'], ['May 2025', '$100M', 'run rate'], ['Oct 2025', '$150M', 'run rate'], ['FY2025', '$240M', 'ARR, actual (investor memo)']] },
+    { name: 'DeepSeek', color: 'var(--c8)',
+      pts: [[20.5, 0.21], [32.5, 0.45]],
+      rows: [['Mid-2025', '$200–220M', 'run rate (weaker-sourced)'], ['Mid-2026', '~$450M', 'run rate, "nears $500M" (The Information)']] },
+    { name: 'Google (est.)', color: 'var(--muted)', estOnly: true, endLabel: 'Google ~$3–6B est',
+      pts: [[14, 0.3, 1], [26, 1.5, 1], [32, 4.5, 1]],
+      rows: [['FY2024', '~$300M', 'Gemini subscription revenue estimate (unverified aggregator, low confidence)'], ['FY2025', '~$1.2B', 'Gemini / Google One AI subscription estimate (unverified aggregator, low confidence)'], ['Q1 2026', '—', 'Alphabet: revenue from products built on its gen-AI models grew ~800% YoY — no dollar base given'], ['Q1 2026', '8M seats', 'Gemini Enterprise paid seats across ~2,800 companies, ~4 months after launch'], ['Mid-2026', '$3–6B', 'estimate on this page: subscriptions + enterprise seats + API; excludes AI-driven search ads']] },
+    { name: 'Meta AI (est.)', color: 'var(--muted)', estOnly: true, endLabel: 'Meta AI ~$0.2B est', endLabelLogOnly: true,
+      pts: [[26, 0.1, 1], [32, 0.2, 1]],
+      rows: [['2025', '$2–3B', 'Meta internal target for "generative AI products" (Kadrey v. Meta court filing) — scope undefined; a target, not an actual'], ['Mid-2026', '~$0.1–0.3B', 'estimate on this page: Llama API has no visible first-party monetization; Meta AI has no ads or subscription tier yet'], ['Q2 2026', '$75B', 'Advantage+ AI-powered ad suite run rate — AI-driven ads, not direct AI revenue; listed for scale']] },
+  ];
+  const X0 = 0, X1 = 35.5; // Oct 2023 .. mid-Sep 2026
+  const MONTHS = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+  const idxToDate = i => {
+    const m = Math.round(i);
+    return MONTHS[((m % 12) + 12) % 12] + ' ' + (2023 + Math.floor((m + 9) / 12));
+  };
+
+  const race = document.getElementById('race');
+  const raceBox = document.getElementById('racebox');
+  const raceTip = document.getElementById('race-tip');
+  const W = 880, H = 440, padL = 58, padR = 20, padT = 26, padB = 36;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const x = i => padL + ((i - X0) / (X1 - X0)) * plotW;
+  let scale = 'lin';
+  const LOGMIN = -2, LOGMAX = 2; // $10M .. $100B
+  const LINMAX = 70;
+  const yOf = v => scale === 'log'
+    ? padT + (1 - (Math.log10(v) - LOGMIN) / (LOGMAX - LOGMIN)) * plotH
+    : padT + (1 - v / LINMAX) * plotH;
+
+  // legend (built once)
+  const legend = document.getElementById('race-legend');
+  SERIES.forEach(s => {
+    const span = document.createElement('span');
+    const lk = document.createElement('span');
+    lk.className = 'linekey';
+    lk.style.borderTopColor = s.color;
+    if (s.estOnly) lk.style.borderTopStyle = 'dashed';
+    span.appendChild(lk);
+    span.appendChild(document.createTextNode(' ' + s.name));
+    legend.appendChild(span);
+  });
+
+  function drawRace() {
+    race.textContent = '';
+    // gridlines + y labels
+    const ticks = scale === 'log' ? [0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 100] : [0, 10, 20, 30, 40, 50, 60, 70];
+    ticks.forEach(t => {
+      const yy = yOf(t === 0 ? (scale === 'log' ? 0.01 : 0.0001) : t);
+      const yv = scale === 'lin' && t === 0 ? padT + plotH : yy;
+      el(race, 'line', { x1: padL, x2: W - padR, y1: yv, y2: yv,
+        stroke: (t === 0.01 || t === 0) ? 'var(--baseline)' : 'var(--grid)', 'stroke-width': 1 });
+      el(race, 'text', { x: padL - 8, y: yv + 4, 'text-anchor': 'end', fill: 'var(--muted)',
+        'font-size': 11.5, 'font-family': 'inherit', style: 'font-variant-numeric: tabular-nums' })
+        .textContent = t === 0 ? '0' : (t >= 1 ? '$' + t + 'B' : '$' + Math.round(t * 1000) + 'M');
+    });
+    // x ticks: each January + each July
+    for (let i = 3; i <= X1; i += 6) {
+      el(race, 'text', { x: x(i), y: H - 12, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 12, 'font-family': 'inherit' })
+        .textContent = (i % 12 === 3 ? 'Jan ' : 'Jul ') + (2024 + Math.floor((i - 3) / 12));
+    }
+    // series
+    SERIES.forEach(s => {
+      const seg = pts => pts.map((p, j) => (j ? 'L' : 'M') + x(p[0]).toFixed(1) + ' ' + yOf(p[1]).toFixed(1)).join(' ');
+      for (let j = 1; j < s.pts.length; j++) {
+        const attrs = { d: seg([s.pts[j - 1], s.pts[j]]), fill: 'none', stroke: s.color, 'stroke-width': 2,
+          'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
+        if (s.pts[j - 1][2] || s.pts[j][2]) attrs['stroke-dasharray'] = '5 5';
+        el(race, 'path', attrs);
+      }
+      s.pts.forEach(p => {
+        el(race, 'circle', { cx: x(p[0]), cy: yOf(p[1]), r: 4,
+          fill: p[2] ? 'var(--surface)' : s.color, stroke: p[2] ? s.color : 'var(--surface)', 'stroke-width': 2 });
+      });
+      if (s.endLabel && (!s.endLabelLogOnly || scale === 'log')) {
+        const lp = s.pts[s.pts.length - 1];
+        const anchor = s.endLabelSide === 'right' ? 'start' : 'end';
+        const dx = s.endLabelSide === 'right' ? 10 : -10;
+        el(race, 'text', { x: x(lp[0]) + dx, y: yOf(lp[1]) + (s.endLabelDy ?? -10), 'text-anchor': anchor,
+          fill: 'var(--muted)', 'font-size': 11.5, 'font-family': 'inherit' }).textContent = s.endLabel;
+      }
+    });
+    // direct end labels for the leads; OpenAI's only fits cleanly on the log scale
+    const aEnd = SERIES[0].pts[SERIES[0].pts.length - 1];
+    el(race, 'text', { x: x(aEnd[0]) - 10, y: yOf(aEnd[1]) - 10, 'text-anchor': 'end', fill: 'var(--ink-2)',
+      'font-size': 12.5, 'font-weight': 650, 'font-family': 'inherit' }).textContent = 'Anthropic $65B';
+    if (scale === 'log') {
+      const oEnd = SERIES[1].pts[SERIES[1].pts.length - 1];
+      el(race, 'text', { x: x(oEnd[0]) - 10, y: yOf(oEnd[1]) + 30, 'text-anchor': 'end', fill: 'var(--ink-2)',
+        'font-size': 12.5, 'font-weight': 650, 'font-family': 'inherit' }).textContent = 'OpenAI $40B+';
+    }
+    // crosshair (added last so it sits on top; hidden until hover)
+    crosshair = el(race, 'line', { x1: 0, x2: 0, y1: padT, y2: padT + plotH,
+      stroke: 'var(--baseline)', 'stroke-width': 1, visibility: 'hidden' });
+  }
+  let crosshair = null;
+
+  function interp(s, xi) {
+    const pts = s.pts;
+    if (xi < pts[0][0] - 0.5 || xi > pts[pts.length - 1][0] + 0.5) return null;
+    if (xi <= pts[0][0]) return { v: pts[0][1], est: !!pts[0][2] };
+    for (let j = 1; j < pts.length; j++) {
+      if (xi <= pts[j][0]) {
+        const [x0v, v0] = pts[j - 1], [x1v, v1] = pts[j];
+        const f = (xi - x0v) / (x1v - x0v);
+        const v = Math.pow(10, Math.log10(v0) + f * (Math.log10(v1) - Math.log10(v0)));
+        return { v, est: !!pts[j][2] || !!pts[j - 1][2] };
+      }
+    }
+    return { v: pts[pts.length - 1][1], est: !!pts[pts.length - 1][2] };
+  }
+
+  race.addEventListener('mousemove', ev => {
+    const r = race.getBoundingClientRect();
+    const sx = W / r.width;
+    const px = (ev.clientX - r.left) * sx;
+    if (px < padL || px > W - padR) { raceTip.style.display = 'none'; if (crosshair) crosshair.setAttribute('visibility', 'hidden'); return; }
+    const xi = X0 + ((px - padL) / plotW) * (X1 - X0);
+    if (crosshair) { crosshair.setAttribute('x1', px); crosshair.setAttribute('x2', px); crosshair.setAttribute('visibility', 'visible'); }
+    raceTip.textContent = '';
+    const title = document.createElement('div');
+    title.className = 't-title';
+    title.textContent = idxToDate(xi);
+    raceTip.appendChild(title);
+    SERIES.forEach(s => {
+      const iv = interp(s, xi);
+      if (!iv) return;
+      const row = document.createElement('div');
+      row.className = 't-row';
+      const lk = document.createElement('span');
+      lk.className = 'lk';
+      lk.style.borderTopColor = s.color;
+      row.appendChild(lk);
+      const v = document.createElement('span');
+      v.className = 'v';
+      v.textContent = fmt(iv.v) + (iv.est ? ' est' : '');
+      row.appendChild(v);
+      const n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = s.name;
+      row.appendChild(n);
+      raceTip.appendChild(row);
+    });
+    const bb = raceBox.getBoundingClientRect();
+    raceTip.style.display = 'block';
+    let tx = ev.clientX - bb.left + 16, ty = ev.clientY - bb.top - 10;
+    if (tx + 200 > bb.width) tx = ev.clientX - bb.left - 216;
+    raceTip.style.left = tx + 'px';
+    raceTip.style.top = ty + 'px';
+  });
+  race.addEventListener('mouseleave', () => {
+    raceTip.style.display = 'none';
+    if (crosshair) crosshair.setAttribute('visibility', 'hidden');
+  });
+
+  const bLog = document.getElementById('btn-log'), bLin = document.getElementById('btn-lin');
+  const setScale = s => {
+    scale = s;
+    bLog.setAttribute('aria-pressed', String(s === 'log'));
+    bLin.setAttribute('aria-pressed', String(s === 'lin'));
+    drawRace();
+  };
+  bLog.addEventListener('click', () => setScale('log'));
+  bLin.addEventListener('click', () => setScale('lin'));
+  drawRace();
+
+  // data tables
+  const tables = document.getElementById('tables');
+  SERIES.forEach(s => {
+    const d = document.createElement('details');
+    const sum = document.createElement('summary');
+    sum.textContent = s.name;
+    d.appendChild(sum);
+    const box = document.createElement('div');
+    box.style.overflowX = 'auto';
+    const t = document.createElement('table');
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    ['Date', 'Figure', 'Basis'].forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    t.appendChild(thead);
+    const tb = document.createElement('tbody');
+    s.rows.forEach(r => {
+      const tr = document.createElement('tr');
+      r.forEach(c => {
+        const td = document.createElement('td');
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    box.appendChild(t);
+    d.appendChild(box);
+    tables.appendChild(d);
+  });
+
+  // ---- Anthropic monthly bars ------------------------------------------
+  const svg2 = document.getElementById('chart');
+  const tip2 = document.getElementById('month-tip');
+  const box2 = document.getElementById('monthbox');
+  const W2 = 800, H2 = 360, pL = 46, pR = 14, pT = 30, pB = 32;
+  const pW = W2 - pL - pR, pH = H2 - pT - pB;
+  const yMax = 6;
+  const y2 = v => pT + (1 - v / yMax) * pH;
+  const months = [
+    { m: 'Jan', v: 1.08, days: 31, est: false, tip: 'Modeled from end-2025 $9B run rate + Q1 total' },
+    { m: 'Feb', v: 1.43, days: 28, est: false, tip: 'Modeled; $14B run rate disclosed Feb 12' },
+    { m: 'Mar', v: 2.22, days: 31, est: false, tip: 'Modeled; residual of Q1 actual $4.73B' },
+    { m: 'Apr', v: 2.80, days: 30, est: false, tip: 'Anchored to $30B run rate on Apr 6' },
+    { m: 'May', v: 4.00, days: 31, est: false, tip: 'Anchored to $47B run rate crossed mid-May' },
+    { m: 'Jun', v: 4.80, days: 30, est: true, tip: 'Implied by Q2 > $11.5B minus Apr + May. Range $4.4–5.6B; $5.6B is what the Apr–May pace would have produced.' },
+  ];
+  const bandW = pW / months.length, barW = 58;
+  for (let g = 0; g <= yMax; g++) {
+    el(svg2, 'line', { x1: pL, x2: W2 - pR, y1: y2(g), y2: y2(g),
+      stroke: g === 0 ? 'var(--baseline)' : 'var(--grid)', 'stroke-width': 1 });
+    if (g > 0) el(svg2, 'text', { x: pL - 8, y: y2(g) + 4, 'text-anchor': 'end', fill: 'var(--muted)',
+      'font-size': 11.5, 'font-family': 'inherit', style: 'font-variant-numeric: tabular-nums' })
+      .textContent = '$' + g + 'B';
+  }
+  months.forEach((d, i) => {
+    const cx = pL + bandW * i + bandW / 2;
+    const bx = cx - barW / 2, by = y2(d.v), r = 4;
+    const path = `M ${bx} ${y2(0)} L ${bx} ${by + r} Q ${bx} ${by} ${bx + r} ${by} L ${bx + barW - r} ${by} Q ${bx + barW} ${by} ${bx + barW} ${by + r} L ${bx + barW} ${y2(0)} Z`;
+    el(svg2, 'path', { d: path, fill: d.est ? 'var(--blue-wash)' : 'var(--c1)',
+      stroke: d.est ? 'var(--c1)' : 'none', 'stroke-width': d.est ? 1.8 : 0,
+      'stroke-dasharray': d.est ? '5 4' : 'none' });
+    if (d.est) {
+      el(svg2, 'line', { x1: cx, x2: cx, y1: y2(4.4), y2: y2(5.6), stroke: 'var(--ink-2)', 'stroke-width': 1.6 });
+      el(svg2, 'line', { x1: cx - 9, x2: cx + 9, y1: y2(4.4), y2: y2(4.4), stroke: 'var(--ink-2)', 'stroke-width': 1.6 });
+      el(svg2, 'line', { x1: cx - 9, x2: cx + 9, y1: y2(5.6), y2: y2(5.6), stroke: 'var(--ink-2)', 'stroke-width': 1.6 });
+      el(svg2, 'text', { x: cx - 14, y: y2(5.6) + 4, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11.5, 'font-family': 'inherit' })
+        .textContent = '$5.6B if Apr–May pace had held';
+    }
+    if (i >= 3) {
+      el(svg2, 'text', { x: d.est ? cx - 14 : cx, y: by - 8, 'text-anchor': d.est ? 'end' : 'middle',
+        fill: 'var(--ink-2)', 'font-size': 12.5, 'font-weight': 650, 'font-family': 'inherit',
+        style: 'font-variant-numeric: tabular-nums' })
+        .textContent = (d.est ? '≈' : '') + '$' + d.v.toFixed(1) + 'B';
+    }
+    el(svg2, 'text', { x: cx, y: H2 - 10, 'text-anchor': 'middle', fill: 'var(--muted)', 'font-size': 12, 'font-family': 'inherit' })
+      .textContent = d.m + (d.est ? ' (est.)' : '');
+    const hit = el(svg2, 'rect', { x: pL + bandW * i, y: pT, width: bandW, height: pH, fill: 'transparent' });
+    hit.addEventListener('mousemove', ev => {
+      const bb = box2.getBoundingClientRect();
+      tip2.textContent = '';
+      const tt = document.createElement('div');
+      tt.className = 't-title';
+      tt.textContent = d.m + ' 2026 — ' + (d.est ? '≈' : '') + '$' + d.v.toFixed(2) + 'B';
+      tip2.appendChild(tt);
+      tip2.appendChild(document.createTextNode(d.tip));
+      tip2.style.display = 'block';
+      let tx = ev.clientX - bb.left + 14, ty = ev.clientY - bb.top - 10;
+      if (tx + 250 > bb.width) tx = ev.clientX - bb.left - 254;
+      tip2.style.left = tx + 'px';
+      tip2.style.top = ty + 'px';
+    });
+    hit.addEventListener('mouseleave', () => { tip2.style.display = 'none'; });
+  });
+  [[1, 12, 14 / 12, '$14B run rate · Feb 12', -26, -9],
+   [3, 6, 30 / 12, '$30B run rate · Apr 6', -10, -9],
+   [4, 15, 47 / 12, '$47B run rate · mid-May', -35, 4]].forEach(([mi, day, v, label, dx, dy]) => {
+    const xx = pL + bandW * mi + (day / months[mi].days) * bandW;
+    el(svg2, 'circle', { cx: xx, cy: y2(v), r: 4.5, fill: 'var(--ink)', stroke: 'var(--surface)', 'stroke-width': 2 });
+    el(svg2, 'text', { x: xx + dx, y: y2(v) + dy, 'text-anchor': 'end', fill: 'var(--muted)', 'font-size': 11, 'font-family': 'inherit' })
+      .textContent = label;
+  });
+})();
+</script>
